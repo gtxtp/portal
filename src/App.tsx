@@ -43,7 +43,7 @@ function App() {
       {activeCandle && (
         <div className="rounded border border-orion-neon-cyan p-4">
           <h2 className="mb-2 text-lg font-semibold text-orion-neon-cyan">
-            Active Candle: {activeCandle.symbol}
+            Active Candle: {activeCandle.symbol.toUpperCase()}
           </h2>
           <p>Open: ${activeCandle.open.toFixed(2)}</p>
           <p>High: ${activeCandle.high.toFixed(2)}</p>

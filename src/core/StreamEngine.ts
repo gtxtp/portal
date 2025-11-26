@@ -8,6 +8,8 @@ export interface StreamEngineConfig {
   useUSEndpoint?: boolean;
   /** Enable console logging of incoming data */
   enableLogging?: boolean;
+  /** Symbols to log for debugging (defaults to ['BTCUSDT', 'ETHUSDT', 'BNBUSDT']) */
+  logSymbols?: string[];
 }
 
 /**
@@ -81,11 +83,13 @@ class StreamEngine {
 
   private reconnectTimeouts: { ticker?: ReturnType<typeof setTimeout>; kline?: ReturnType<typeof setTimeout> } = {};
   private readonly RECONNECT_DELAY = 3000;
+  private readonly DEFAULT_LOG_SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT'];
 
   private constructor(config: StreamEngineConfig = {}) {
     this.config = {
       useUSEndpoint: config.useUSEndpoint ?? false,
       enableLogging: config.enableLogging ?? true,
+      logSymbols: config.logSymbols ?? this.DEFAULT_LOG_SYMBOLS,
     };
   }
 
@@ -143,6 +147,11 @@ class StreamEngine {
     this.log(`Using ${this.config.useUSEndpoint ? 'US' : 'Global'} endpoint`);
 
     this.connectTickerStream();
+
+    // Also reconnect kline stream if an active symbol is set
+    if (this.activeSymbol) {
+      this.connectKlineStream();
+    }
   }
 
   /**
@@ -215,9 +224,6 @@ class StreamEngine {
       this.log('Endpoint changed, reconnecting...');
       this.stop();
       this.start();
-      if (this.activeSymbol) {
-        this.connectKlineStream();
-      }
     }
   }
 
@@ -365,9 +371,8 @@ class StreamEngine {
     // Update store
     useMarketStore.getState().updateTickers(mergedTickers);
 
-    // Log sample data
-    const sampleSymbols = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT'];
-    for (const symbol of sampleSymbols) {
+    // Log sample data using configurable symbols
+    for (const symbol of this.config.logSymbols) {
       const ticker = tickers.get(symbol);
       if (ticker) {
         this.log(`${symbol}: $${parseFloat(ticker.closePrice).toFixed(2)}`);
