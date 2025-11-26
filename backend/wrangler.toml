@@ -6,8 +6,8 @@ compatibility_flags = ["nodejs_compat"]
 # KV Namespace binding
 [[kv_namespaces]]
 binding = "ORION_CACHE"
-id = "your-kv-namespace-id"
-preview_id = "your-preview-kv-namespace-id"
+id = "d0853bad5d7b49a5a6a7f872180aae06"
+preview_id = "d0853bad5d7b49a5a6a7f872180aae06"
 
 # Workers AI binding
 [ai]
