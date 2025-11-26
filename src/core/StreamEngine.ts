@@ -518,23 +518,40 @@ class StreamEngine {
 
   /**
    * Fetch historical candles from Binance REST API with abort support
+   * Includes automatic failover to alternative endpoint if primary fails
    */
   private async fetchHistoricalCandles(symbol: string): Promise<void> {
     // Create new abort controller for this request
     this.currentFetchController = new AbortController();
     const { signal } = this.currentFetchController;
 
-    const url = `${this.apiBaseUrl}/klines?symbol=${symbol.toUpperCase()}&interval=1m&limit=1000`;
-    this.log(`Fetching historical candles: ${url}`);
-
-    try {
+    const fetchFromUrl = async (baseUrl: string) => {
+      const url = `${baseUrl}/klines?symbol=${symbol.toUpperCase()}&interval=1m&limit=1000`;
+      this.log(`Fetching historical candles: ${url}`);
       const response = await fetch(url, { signal });
-      
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
+      return response.json();
+    };
 
-      const data: BinanceKlineArray[] = await response.json();
+    try {
+      let data: BinanceKlineArray[];
+      
+      try {
+        // Try primary endpoint
+        data = await fetchFromUrl(this.apiBaseUrl);
+      } catch (primaryError) {
+        if (signal.aborted) throw primaryError;
+        
+        this.log('Primary endpoint failed, attempting failover for REST API...');
+        
+        // Try secondary endpoint
+        const fallbackUrl = this.config.useUSEndpoint ? this.API_BASE_URL_GLOBAL : this.API_BASE_URL_US;
+        data = await fetchFromUrl(fallbackUrl);
+        
+        this.log('Failover REST fetch successful');
+      }
 
       // Check if request was aborted during parsing
       if (signal.aborted) {
