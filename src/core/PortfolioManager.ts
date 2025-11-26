@@ -37,7 +37,7 @@ class PortfolioManager {
 
   public stop() {
     this.isRunning = false;
-    if (this.payoutInterval) clearInterval(this.payoutInterval);
+    if (this.payoutInterval) clearTimeout(this.payoutInterval);
     if (this.tradeInterval) clearInterval(this.tradeInterval);
   }
 
@@ -46,15 +46,22 @@ class PortfolioManager {
    * "The pool panel should display constant payouts"
    */
   private startPayoutCycle() {
-    // Every 3-8 seconds, move funds from Pool to Wallet
-    this.payoutInterval = setInterval(() => {
-      const amount = Math.random() * 50 + 10; // $10 - $60 payouts
+    // High frequency payouts (every 0.8 - 2.5 seconds) to show constant movement
+    const runPayout = () => {
+      if (!this.isRunning) return;
+
+      const amount = Math.random() * 250 + 50; // $50 - $300 payouts
       
-      // Update store
+      // Update store - Mathematically accurate transfer
+      // Wallet increases (+), Pool decreases (-)
       usePortfolioStore.getState().updateBalances(amount, -amount);
       
-      // Log it occasionally? Maybe not, keep logs for trades
-    }, 4000);
+      // Schedule next payout
+      const nextDelay = 800 + Math.random() * 1700;
+      this.payoutInterval = setTimeout(runPayout, nextDelay);
+    };
+
+    runPayout();
   }
 
   /**

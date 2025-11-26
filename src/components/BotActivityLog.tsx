@@ -22,7 +22,7 @@ export function BotActivityLog() {
     <div className="h-full flex flex-col rounded border border-white/5 bg-orion-panel overflow-hidden">
       <div className="h-8 flex-shrink-0 flex items-center gap-2 border-b border-white/5 px-3 bg-[#0B0E11]">
         <Terminal className="h-3.5 w-3.5 text-orion-neon-green" />
-        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-300">System Terminal</span>
+        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-300">Agent Trades</span>
       </div>
       <div className="flex-1 overflow-y-auto p-1.5 font-mono">
         {logs.map((log, idx) => (

@@ -37,8 +37,8 @@ interface PortfolioState {
 
 export const usePortfolioStore = create<PortfolioState>((set, get) => ({
   walletBalance: 12588.00,
-  poolBalance: 24333.00,
-  totalEquity: 36921.00,
+  poolBalance: 142500000.00, // Large liquidity pool
+  totalEquity: 142512588.00,
   sessionPnL: 270.60,
   trades: [],
   logs: [],
