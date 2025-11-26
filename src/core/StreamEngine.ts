@@ -57,7 +57,6 @@ interface BinanceKlineEvent {
 
 /**
  * Raw kline data from Binance REST API (array format)
- * [openTime, open, high, low, close, volume, closeTime, quoteVolume, trades, takerBuyBase, takerBuyQuote, ignore]
  */
 type BinanceKlineArray = [
   number,   // 0: Open time
@@ -74,15 +73,18 @@ type BinanceKlineArray = [
   string    // 11: Ignore
 ];
 
+const STORAGE_KEY_REGION = 'orion_binance_region';
+
 /**
  * StreamEngine - Singleton class for managing Binance WebSocket connections
  *
  * Features:
+ * - Geo-Failover: Auto-detects blocked regions and switches endpoints
  * - Socket A: Connects to miniTicker@arr stream for all market tickers
  * - Socket B: Connects to kline stream for active chart symbol
  * - Buffering: Uses requestAnimationFrame to flush updates max 60 times/sec
  * - Auto-reconnect: Automatically reconnects on connection close
- * - US Support: Flag to switch between global and US Binance endpoints
+ * - Abort Control: Cancels pending fetch requests on rapid symbol switching
  */
 class StreamEngine {
   private static instance: StreamEngine | null = null;
@@ -99,18 +101,53 @@ class StreamEngine {
 
   private readonly BASE_URL_GLOBAL = 'wss://stream.binance.com:9443/ws';
   private readonly BASE_URL_US = 'wss://stream.binance.us:9443/ws';
+  private readonly API_BASE_URL_GLOBAL = 'https://api.binance.com/api/v3';
+  private readonly API_BASE_URL_US = 'https://api.binance.us/api/v3';
 
   private reconnectTimeouts: { ticker?: ReturnType<typeof setTimeout>; kline?: ReturnType<typeof setTimeout> } = {};
+  private pollingInterval: ReturnType<typeof setInterval> | null = null;
   private readonly RECONNECT_DELAY = 3000;
+  private readonly POLLING_INTERVAL = 5000; // Poll every 5s as fallback
   private readonly DEFAULT_LOG_SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT'];
-  private readonly API_BASE_URL = 'https://api.binance.com/api/v3';
+
+  // Abort controller for fetch requests
+  private currentFetchController: AbortController | null = null;
+  private failoverAttempted = false;
 
   private constructor(config: StreamEngineConfig = {}) {
+    // Check localStorage for persisted region preference
+    const savedRegion = this.getSavedRegion();
+    
     this.config = {
-      useUSEndpoint: config.useUSEndpoint ?? false,
+      useUSEndpoint: savedRegion === 'US' || (config.useUSEndpoint ?? false),
       enableLogging: config.enableLogging ?? true,
       logSymbols: config.logSymbols ?? this.DEFAULT_LOG_SYMBOLS,
     };
+  }
+
+  /**
+   * Get saved region from localStorage
+   */
+  private getSavedRegion(): 'US' | 'GLOBAL' | null {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_REGION);
+      if (saved === 'US' || saved === 'GLOBAL') return saved;
+    } catch {
+      // localStorage not available
+    }
+    return null;
+  }
+
+  /**
+   * Save region preference to localStorage
+   */
+  private saveRegion(region: 'US' | 'GLOBAL'): void {
+    try {
+      localStorage.setItem(STORAGE_KEY_REGION, region);
+      this.log(`Region preference saved: ${region}`);
+    } catch {
+      // localStorage not available
+    }
   }
 
   /**
@@ -141,6 +178,13 @@ class StreamEngine {
   }
 
   /**
+   * Get the API base URL based on configuration
+   */
+  private get apiBaseUrl(): string {
+    return this.config.useUSEndpoint ? this.API_BASE_URL_US : this.API_BASE_URL_GLOBAL;
+  }
+
+  /**
    * Log a message if logging is enabled
    */
   private log(message: string, data?: unknown): void {
@@ -154,24 +198,235 @@ class StreamEngine {
   }
 
   /**
-   * Start all WebSocket connections
+   * Start all WebSocket connections with geo-failover
    */
-  public start(): void {
+  public async start(): Promise<void> {
     if (this.isRunning) {
       this.log('Already running');
       return;
     }
 
     this.isRunning = true;
+    this.failoverAttempted = false;
     this.log('Starting StreamEngine...');
+
+    // Start polling immediately (will use default config initially)
+    this.startPollingFallback();
+
+    // Probe regions first if no preference is saved
+    if (!this.getSavedRegion()) {
+      try {
+        await this.probeRegions();
+      } catch (error) {
+        this.log('Region probe error, continuing with default', error);
+      }
+    }
+
     this.log(`Using ${this.config.useUSEndpoint ? 'US' : 'Global'} endpoint`);
 
-    this.connectTickerStream();
+    this.connectTickerStreamWithFailover();
 
     // Also reconnect kline stream if an active symbol is set
     if (this.activeSymbol) {
       this.connectKlineStream();
+      // Re-fetch historical candles to ensure we have data for the selected region
+      this.fetchHistoricalCandles(this.activeSymbol);
     }
+  }
+
+  /**
+   * Probe both regions to determine the best endpoint
+   */
+  private async probeRegions(): Promise<void> {
+    this.log('Probing regions...');
+    
+    const fetchWithTimeout = async (url: string) => {
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort(), 3000);
+      try {
+        const res = await fetch(url, { method: 'GET', signal: controller.signal });
+        clearTimeout(id);
+        return res;
+      } catch (e) {
+        clearTimeout(id);
+        throw e;
+      }
+    };
+
+    const probeGlobal = fetchWithTimeout(`${this.API_BASE_URL_GLOBAL}/ping`)
+      .then(res => res.ok ? 'GLOBAL' : null)
+      .catch(() => null);
+      
+    const probeUS = fetchWithTimeout(`${this.API_BASE_URL_US}/ping`)
+      .then(res => res.ok ? 'US' : null)
+      .catch(() => null);
+
+    // Wait for the first successful response
+    const result = await Promise.any([
+      probeGlobal.then(r => r ? r : Promise.reject()),
+      probeUS.then(r => r ? r : Promise.reject())
+    ]).catch(() => null);
+
+    if (result === 'US') {
+      this.config.useUSEndpoint = true;
+      this.saveRegion('US');
+      this.log('Region probe selected: US');
+    } else if (result === 'GLOBAL') {
+      this.config.useUSEndpoint = false;
+      this.saveRegion('GLOBAL');
+      this.log('Region probe selected: GLOBAL');
+    } else {
+      this.log('Region probe failed, defaulting to current config');
+    }
+  }
+
+  /**
+   * Start polling fallback for ticker data
+   */
+  private startPollingFallback(): void {
+    if (this.pollingInterval) clearInterval(this.pollingInterval);
+    
+    const poll = async () => {
+      if (!this.isRunning) return;
+      
+      try {
+        const url = `${this.apiBaseUrl}/ticker/24hr`;
+        const response = await fetch(url);
+        if (!response.ok) return;
+        
+        const data = await response.json();
+        // Map REST data to Ticker format
+        const tickers = new Map<string, Ticker>();
+        
+        // Handle both array (Global) and object (US sometimes) responses if needed, 
+        // but usually ticker/24hr returns array
+        if (Array.isArray(data)) {
+          for (const item of data) {
+            tickers.set(item.symbol, {
+              symbol: item.symbol,
+              closePrice: item.lastPrice,
+              openPrice: item.openPrice,
+              highPrice: item.highPrice,
+              lowPrice: item.lowPrice,
+              volume: item.volume,
+              quoteVolume: item.quoteVolume,
+              eventTime: Date.now(),
+            });
+          }
+        }
+
+        if (tickers.size > 0) {
+           const currentTickers = useMarketStore.getState().tickers;
+           const merged = new Map(currentTickers);
+           for (const [key, val] of tickers) {
+             merged.set(key, val);
+           }
+           useMarketStore.getState().updateTickers(merged);
+        }
+      } catch (error) {
+        // Silent fail for polling
+      }
+    };
+
+    // Run immediately
+    poll();
+
+    // Then interval
+    this.pollingInterval = setInterval(poll, this.POLLING_INTERVAL);
+  }
+
+  /**
+   * Connect to ticker stream with automatic geo-failover
+   */
+  private connectTickerStreamWithFailover(): void {
+    const url = `${this.baseUrl}/!miniTicker@arr`;
+    this.log(`Connecting to ticker stream with failover: ${url}`);
+
+    let connectionTimeout: ReturnType<typeof setTimeout> | null = null;
+    let hasConnected = false;
+
+    try {
+      this.tickerSocket = new WebSocket(url);
+
+      // Set up failover timeout - INCREASED to 5s to avoid flapping
+      connectionTimeout = setTimeout(() => {
+        if (!hasConnected && !this.failoverAttempted) {
+          this.log(`Connection timeout after 5000ms, attempting failover...`);
+          this.attemptFailover();
+        }
+      }, 5000);
+
+      this.tickerSocket.onopen = () => {
+        hasConnected = true;
+        if (connectionTimeout) clearTimeout(connectionTimeout);
+        
+        this.log('Ticker stream connected');
+        useMarketStore.getState().setTickerConnected(true);
+        
+        // Save successful region
+        this.saveRegion(this.config.useUSEndpoint ? 'US' : 'GLOBAL');
+      };
+
+      this.tickerSocket.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data) as BinanceMiniTicker[];
+          this.handleTickerData(data);
+        } catch (error) {
+          this.log('Error parsing ticker data', error);
+        }
+      };
+
+      this.tickerSocket.onerror = (error) => {
+        this.log('Ticker stream error', error);
+        
+        // Attempt failover on error if not already attempted
+        if (!hasConnected && !this.failoverAttempted) {
+          if (connectionTimeout) clearTimeout(connectionTimeout);
+          this.attemptFailover();
+        }
+      };
+
+      this.tickerSocket.onclose = () => {
+        if (connectionTimeout) clearTimeout(connectionTimeout);
+        this.log('Ticker stream closed');
+        useMarketStore.getState().setTickerConnected(false);
+
+        // Auto-reconnect (but not failover on normal close)
+        if (this.isRunning) {
+          this.log(`Reconnecting ticker stream in ${this.RECONNECT_DELAY}ms...`);
+          this.reconnectTimeouts.ticker = setTimeout(() => {
+            this.connectTickerStream();
+          }, this.RECONNECT_DELAY);
+        }
+      };
+    } catch (error) {
+      this.log('Failed to create ticker WebSocket', error);
+      if (!this.failoverAttempted) {
+        this.attemptFailover();
+      }
+    }
+  }
+
+  /**
+   * Attempt to failover to the other endpoint
+   */
+  private attemptFailover(): void {
+    this.failoverAttempted = true;
+    
+    // Close existing socket
+    if (this.tickerSocket) {
+      this.tickerSocket.close();
+      this.tickerSocket = null;
+    }
+
+    // Switch endpoint
+    const newEndpoint = !this.config.useUSEndpoint;
+    this.config.useUSEndpoint = newEndpoint;
+    
+    this.log(`Failover: Switching to ${newEndpoint ? 'US' : 'Global'} endpoint`);
+    
+    // Try connecting with the new endpoint
+    this.connectTickerStream();
   }
 
   /**
@@ -181,12 +436,23 @@ class StreamEngine {
     this.isRunning = false;
     this.log('Stopping StreamEngine...');
 
+    // Abort any pending fetch
+    if (this.currentFetchController) {
+      this.currentFetchController.abort();
+      this.currentFetchController = null;
+    }
+
     // Clear reconnect timeouts
     if (this.reconnectTimeouts.ticker) {
       clearTimeout(this.reconnectTimeouts.ticker);
     }
     if (this.reconnectTimeouts.kline) {
       clearTimeout(this.reconnectTimeouts.kline);
+    }
+    
+    if (this.pollingInterval) {
+      clearInterval(this.pollingInterval);
+      this.pollingInterval = null;
     }
 
     // Close sockets
@@ -221,6 +487,15 @@ class StreamEngine {
     this.activeSymbol = normalizedSymbol;
     this.log(`Setting active symbol: ${symbol}`);
 
+    // Abort any pending fetch request for previous symbol
+    if (this.currentFetchController) {
+      this.currentFetchController.abort();
+      this.log('Aborted pending fetch request');
+    }
+
+    // Clear existing candles before loading new ones
+    useMarketStore.getState().setHistoricalCandles([]);
+
     // Fetch historical candles for the new symbol
     this.fetchHistoricalCandles(symbol);
 
@@ -242,20 +517,31 @@ class StreamEngine {
   }
 
   /**
-   * Fetch historical candles from Binance REST API
+   * Fetch historical candles from Binance REST API with abort support
    */
   private async fetchHistoricalCandles(symbol: string): Promise<void> {
-    const url = `${this.API_BASE_URL}/klines?symbol=${symbol.toUpperCase()}&interval=1m&limit=1000`;
+    // Create new abort controller for this request
+    this.currentFetchController = new AbortController();
+    const { signal } = this.currentFetchController;
+
+    const url = `${this.apiBaseUrl}/klines?symbol=${symbol.toUpperCase()}&interval=1m&limit=1000`;
     this.log(`Fetching historical candles: ${url}`);
 
     try {
-      const response = await fetch(url);
+      const response = await fetch(url, { signal });
+      
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const data: BinanceKlineArray[] = await response.json();
-      
+
+      // Check if request was aborted during parsing
+      if (signal.aborted) {
+        this.log('Fetch aborted after response received');
+        return;
+      }
+
       const candles: Candle[] = data.map((kline) => ({
         time: kline[0],
         open: parseFloat(kline[1]),
@@ -267,11 +553,20 @@ class StreamEngine {
         isClosed: true,
       }));
 
-      useMarketStore.getState().setHistoricalCandles(candles);
-      this.log(`Loaded ${candles.length} historical candles for ${symbol}`);
+      // Only update if this is still the active symbol
+      if (this.activeSymbol === symbol.toLowerCase()) {
+        useMarketStore.getState().setHistoricalCandles(candles);
+        this.log(`Loaded ${candles.length} historical candles for ${symbol}`);
+      }
     } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        this.log(`Fetch aborted for ${symbol}`);
+        return;
+      }
       // CORS or network error - log warning but keep socket open
-      this.log(`Warning: Failed to fetch historical candles (CORS?):`, error);
+      this.log(`Warning: Failed to fetch historical candles:`, error);
+    } finally {
+      this.currentFetchController = null;
     }
   }
 
@@ -292,7 +587,7 @@ class StreamEngine {
   }
 
   /**
-   * Connect to the miniTicker stream (Socket A)
+   * Connect to the miniTicker stream (Socket A) - standard reconnect
    */
   private connectTickerStream(): void {
     const url = `${this.baseUrl}/!miniTicker@arr`;
@@ -483,6 +778,13 @@ class StreamEngine {
    */
   public isEngineRunning(): boolean {
     return this.isRunning;
+  }
+
+  /**
+   * Get the currently active symbol
+   */
+  public getActiveSymbol(): string | null {
+    return this.activeSymbol;
   }
 }
 

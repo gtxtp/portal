@@ -39,6 +39,8 @@ interface MarketState {
   tickerConnected: boolean;
   /** Connection status for kline stream */
   klineConnected: boolean;
+  /** Currently selected symbol for the chart */
+  activeSymbol: string;
 
   // Actions
   updateTickers: (tickers: Map<string, Ticker>) => void;
@@ -46,6 +48,7 @@ interface MarketState {
   setHistoricalCandles: (candles: Candle[]) => void;
   setTickerConnected: (connected: boolean) => void;
   setKlineConnected: (connected: boolean) => void;
+  setActiveSymbol: (symbol: string) => void;
 }
 
 export const useMarketStore = create<MarketState>((set) => ({
@@ -54,10 +57,12 @@ export const useMarketStore = create<MarketState>((set) => ({
   historicalCandles: [],
   tickerConnected: false,
   klineConnected: false,
+  activeSymbol: 'BTCUSDT',
 
   updateTickers: (tickers) => set({ tickers }),
   setActiveCandle: (candle) => set({ activeCandle: candle }),
   setHistoricalCandles: (candles) => set({ historicalCandles: candles }),
   setTickerConnected: (connected) => set({ tickerConnected: connected }),
   setKlineConnected: (connected) => set({ klineConnected: connected }),
+  setActiveSymbol: (symbol) => set({ activeSymbol: symbol }),
 }));
