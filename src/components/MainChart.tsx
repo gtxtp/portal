@@ -24,7 +24,7 @@ function candleToChartData(candle: Candle): CandlestickData<Time> {
 }
 
 /**
- * MainChart component - displays real-time candlestick chart using lightweight-charts
+ * MainChart component - Real-time candlestick chart with enterprise styling
  */
 export function MainChart() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -44,6 +44,7 @@ export function MainChart() {
       layout: {
         background: { color: CHART_BG_COLOR },
         textColor: CHART_TEXT_COLOR,
+        fontFamily: 'JetBrains Mono',
       },
       grid: {
         vertLines: { color: CHART_GRID_COLOR },
@@ -116,18 +117,19 @@ export function MainChart() {
   }, [activeCandle]);
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-lg border border-gray-800 bg-[#0B0E11]">
-      <div className="flex items-center justify-between border-b border-gray-800 bg-[#161A1E] px-4 py-2">
+    <div className="flex h-full flex-col overflow-hidden rounded border border-white/5 bg-orion-panel">
+      {/* Header */}
+      <div className="flex items-center justify-between border-b border-white/5 px-3 py-1.5">
         <div className="flex items-center gap-3">
-          <h2 className="text-sm font-semibold text-white">BTCUSDT</h2>
-          <span className="text-xs text-gray-500">1m</span>
+          <h2 className="text-[11px] font-semibold text-white">BTC/USDT</h2>
+          <span className="rounded bg-white/10 px-1.5 py-0.5 text-[9px] text-slate-400">1m</span>
         </div>
         <div className="flex items-center gap-2">
           <span
-            className={`h-2 w-2 rounded-full ${klineConnected ? 'bg-[#00C087]' : 'bg-[#F6465D]'}`}
+            className={`h-1.5 w-1.5 rounded-full ${klineConnected ? 'bg-orion-neon-green' : 'bg-orion-neon-red'}`}
           />
-          <span className="text-xs text-gray-500">
-            {klineConnected ? 'Live' : 'Disconnected'}
+          <span className="text-[10px] text-slate-500">
+            {klineConnected ? 'Live' : 'Offline'}
           </span>
         </div>
       </div>
