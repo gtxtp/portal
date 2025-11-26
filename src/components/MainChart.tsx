@@ -63,9 +63,6 @@ export function MainChart() {
   const historicalCandles = useMarketStore((state) => state.historicalCandles);
   const klineConnected = useMarketStore((state) => state.klineConnected);
 
-  const [showIndicators, setShowIndicators] = useState(false);
-  const smaSeriesRef = useRef<ISeriesApi<'Line'> | null>(null);
-
   useEffect(() => {
     if (!containerRef.current) return;
 
@@ -255,6 +252,14 @@ export function MainChart() {
           <div className="flex items-center gap-2">
             <BarChart3 className="h-3.5 w-3.5 text-orion-neon-cyan" />
             <span className="text-xs font-bold text-white tracking-wide">{formatSymbolDisplay(activeSymbol)}</span>
+            {activeCandle && (
+              <div className="hidden md:flex items-center gap-2 text-[9px] font-mono ml-2">
+                <span className="text-slate-400">O:<span className="text-slate-200">{activeCandle.open.toFixed(2)}</span></span>
+                <span className="text-slate-400">H:<span className="text-slate-200">{activeCandle.high.toFixed(2)}</span></span>
+                <span className="text-slate-400">L:<span className="text-slate-200">{activeCandle.low.toFixed(2)}</span></span>
+                <span className="text-slate-400">C:<span className={activeCandle.close >= activeCandle.open ? 'text-orion-neon-green' : 'text-orion-neon-red'}>{activeCandle.close.toFixed(2)}</span></span>
+              </div>
+            )}
           </div>
           
           <div className="h-3 w-px bg-white/10 hidden sm:block" />
