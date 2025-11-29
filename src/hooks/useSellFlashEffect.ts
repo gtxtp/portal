@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { usePortfolioStore } from '../store/usePortfolioStore';
 
 /**
@@ -6,33 +6,30 @@ import { usePortfolioStore } from '../store/usePortfolioStore';
  * Returns `true` briefly (~300ms) when a sell trade happens, then returns to `false`.
  */
 export function useSellFlashEffect(): boolean {
-  const { lastSellTimestamp, clearSellFlash } = usePortfolioStore();
+  const lastSellTimestamp = usePortfolioStore((state) => state.lastSellTimestamp);
   const [sellFlashActive, setSellFlashActive] = useState(false);
   const prevSellTimestamp = useRef<number | null>(null);
-
-  const handleReset = useCallback(() => {
-    setSellFlashActive(false);
-    clearSellFlash();
-  }, [clearSellFlash]);
 
   useEffect(() => {
     if (lastSellTimestamp && lastSellTimestamp !== prevSellTimestamp.current) {
       prevSellTimestamp.current = lastSellTimestamp;
       
-      // Use setTimeout to schedule state updates asynchronously
-      const flashTimeout = setTimeout(() => {
+      // Activate flash on next tick to avoid synchronous setState in effect
+      const activateTimeout = setTimeout(() => {
         setSellFlashActive(true);
       }, 0);
       
-      // Reset after ~300ms
-      const resetTimeout = setTimeout(handleReset, 300);
+      // Reset after 300ms
+      const resetTimeout = setTimeout(() => {
+        setSellFlashActive(false);
+      }, 300);
       
       return () => {
-        clearTimeout(flashTimeout);
+        clearTimeout(activateTimeout);
         clearTimeout(resetTimeout);
       };
     }
-  }, [lastSellTimestamp, handleReset]);
+  }, [lastSellTimestamp]);
 
   return sellFlashActive;
 }
