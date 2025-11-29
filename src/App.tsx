@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Activity, Zap, Radio, TrendingUp, TrendingDown, Globe, Shield } from 'lucide-react';
 import { streamEngine } from './core/StreamEngine';
 import { portfolioManager } from './core/PortfolioManager';
@@ -15,9 +15,34 @@ type MobileTab = 'WATCH' | 'BOOK' | 'LOGS' | 'LEDGER';
 
 function App() {
   const { tickerConnected, tickers } = useMarketStore();
-  const { sessionPnL } = usePortfolioStore();
+  const { sessionPnL, lastSellTimestamp, clearSellFlash } = usePortfolioStore();
   const [region, setRegion] = useState<'Global' | 'US'>('Global');
   const [mobileTab, setMobileTab] = useState<MobileTab>('LOGS');
+  const [sellFlashActive, setSellFlashActive] = useState(false);
+  const prevSellTimestamp = useRef<number | null>(null);
+
+  // Handle sell flash effect
+  useEffect(() => {
+    if (lastSellTimestamp && lastSellTimestamp !== prevSellTimestamp.current) {
+      prevSellTimestamp.current = lastSellTimestamp;
+      
+      // Use setTimeout to avoid synchronous setState within effect
+      const flashTimeout = setTimeout(() => {
+        setSellFlashActive(true);
+      }, 0);
+      
+      // Flash red for ~300ms then return to normal
+      const resetTimeout = setTimeout(() => {
+        setSellFlashActive(false);
+        clearSellFlash();
+      }, 300);
+      
+      return () => {
+        clearTimeout(flashTimeout);
+        clearTimeout(resetTimeout);
+      };
+    }
+  }, [lastSellTimestamp, clearSellFlash]);
 
   useEffect(() => {
     // Start the stream engine (with auto geo-failover)
@@ -72,8 +97,8 @@ function App() {
             <div className="flex items-center gap-6 border-r border-white/10 pr-6">
               <div className="text-right">
                 <div className="text-[9px] uppercase text-slate-500 font-medium tracking-wider">Daily Cash Flow</div>
-                <div className={`flex items-center justify-end gap-1 text-lg font-bold tabular-nums tracking-tight ${
-                  sessionPnL >= 0 ? 'text-orion-neon-green' : 'text-orion-neon-red'
+                <div className={`flex items-center justify-end gap-1 text-lg font-bold tabular-nums tracking-tight transition-colors duration-150 ${
+                  sellFlashActive ? 'text-orion-neon-red' : (sessionPnL >= 0 ? 'text-orion-neon-green' : 'text-orion-neon-red')
                 }`}>
                   {sessionPnL >= 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
                   {sessionPnL >= 0 ? '+' : '-'}${Math.abs(sessionPnL).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -148,8 +173,8 @@ function App() {
           
           <div className="flex flex-col items-end">
             <div className="text-[8px] uppercase text-slate-500 font-medium tracking-wider">Daily Cash Flow</div>
-            <div className={`text-sm font-bold tabular-nums tracking-tight leading-none ${
-              sessionPnL >= 0 ? 'text-orion-neon-green' : 'text-orion-neon-red'
+            <div className={`text-sm font-bold tabular-nums tracking-tight leading-none transition-colors duration-150 ${
+              sellFlashActive ? 'text-orion-neon-red' : (sessionPnL >= 0 ? 'text-orion-neon-green' : 'text-orion-neon-red')
             }`}>
               {sessionPnL >= 0 ? '+' : '-'}${Math.abs(sessionPnL).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>

@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useMarketStore } from '../store/useMarketStore';
+import { usePortfolioStore } from '../store/usePortfolioStore';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 
 interface TickerItem {
@@ -33,6 +34,9 @@ const SIMULATED_INDICES = {
  */
 export function MacroTicker() {
   const tickers = useMarketStore((state) => state.tickers);
+  const { lastSellTimestamp, clearSellFlash } = usePortfolioStore();
+  const [sellFlashActive, setSellFlashActive] = useState(false);
+  const prevSellTimestamp = useRef<number | null>(null);
   const [simulatedPrices, setSimulatedPrices] = useState<Record<string, { price: number; change: number }>>(() => {
     const initial: Record<string, { price: number; change: number }> = {};
     for (const [key, data] of Object.entries(SIMULATED_INDICES)) {
@@ -40,6 +44,29 @@ export function MacroTicker() {
     }
     return initial;
   });
+
+  // Handle sell flash effect
+  useEffect(() => {
+    if (lastSellTimestamp && lastSellTimestamp !== prevSellTimestamp.current) {
+      prevSellTimestamp.current = lastSellTimestamp;
+      
+      // Use setTimeout to avoid synchronous setState within effect
+      const flashTimeout = setTimeout(() => {
+        setSellFlashActive(true);
+      }, 0);
+      
+      // Flash red for ~300ms then return to normal
+      const resetTimeout = setTimeout(() => {
+        setSellFlashActive(false);
+        clearSellFlash();
+      }, 300);
+      
+      return () => {
+        clearTimeout(flashTimeout);
+        clearTimeout(resetTimeout);
+      };
+    }
+  }, [lastSellTimestamp, clearSellFlash]);
 
   // Simulate price noise for indices
   useEffect(() => {
@@ -111,7 +138,9 @@ export function MacroTicker() {
             <span className="text-[10px] font-mono tabular-nums text-white">
               ${item.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
-            <div className={`flex items-center gap-0.5 text-[9px] font-medium ${item.change >= 0 ? 'text-orion-neon-green' : 'text-orion-neon-red'}`}>
+            <div className={`flex items-center gap-0.5 text-[9px] font-medium transition-colors duration-150 ${
+              sellFlashActive ? 'text-orion-neon-red' : (item.change >= 0 ? 'text-orion-neon-green' : 'text-orion-neon-red')
+            }`}>
               {item.change >= 0 ? <TrendingUp className="h-2.5 w-2.5" /> : <TrendingDown className="h-2.5 w-2.5" />}
               <span>{Math.abs(item.change).toFixed(2)}%</span>
             </div>
