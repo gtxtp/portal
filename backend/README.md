@@ -75,6 +75,8 @@ The Trading Agent Engine supports a multi-tier bot system with different ROI rat
 | titan      | Titan Bot      | 0.14% - 0.16%  | 1.12% - 1.28%  | $25,000    | 65 days           |
 | omega      | Omega Bot      | 0.225% (fixed) | 1.80% (fixed)  | $50,000    | 85 days           |
 
+> **Note:** Tier selection is based solely on stake amount. The ROI ranges represent the trading variance within each tier. Users are assigned to the highest tier their stake qualifies for, and their ROI will be within the range of that tier.
+
 **Bot Tier Configuration Structure:**
 ```typescript
 interface BotTierConfig {
