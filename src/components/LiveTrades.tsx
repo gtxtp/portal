@@ -37,13 +37,17 @@ export function LiveTrades() {
                     ? ['rgba(255, 0, 85, 0.15)', 'rgba(255, 255, 255, 0.05)']
                     : isNewest 
                       ? 'rgba(255, 255, 255, 0.05)' 
-                      : 'transparent'
+                      : 'transparent',
+                  boxShadow: showFlashEffect 
+                    ? ['0 0 15px rgba(255, 0, 85, 0.2)', '0 0 0px rgba(255, 0, 85, 0)']
+                    : '0 0 0px rgba(255, 0, 85, 0)'
                 }}
                 transition={{ 
                   duration: showFlashEffect ? 0.8 : 0.3,
-                  backgroundColor: { duration: showFlashEffect ? 1.2 : 0 }
+                  backgroundColor: { duration: showFlashEffect ? 1.2 : 0 },
+                  boxShadow: { duration: showFlashEffect ? 1.2 : 0 }
                 }}
-                className={`grid grid-cols-4 gap-1 px-2 py-1 text-[10px] border-b border-white/5 items-center ${showFlashEffect ? 'shadow-glow-red' : ''}`}
+                className="grid grid-cols-4 gap-1 px-2 py-1 text-[10px] border-b border-white/5 items-center"
               >
                 <div className="flex items-center gap-1.5">
                   <span className="font-bold text-slate-200">{trade.symbol}</span>

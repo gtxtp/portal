@@ -280,6 +280,16 @@ async function getUserBalance(kv: KVNamespace, userId: string): Promise<UserBala
 
 /**
  * Store user balance in KV
+ * @param kv - KV namespace for storage
+ * @param userId - User identifier
+ * @param balance - User balance amount
+ * @param currency - Currency code (defaults to 'USD')
+ * @param botTier - Optional bot tier. If not provided, tier is auto-selected based on balance:
+ *                  - $50,000+ → Omega
+ *                  - $25,000+ → Titan
+ *                  - $4,000+ → Chainpulse
+ *                  - Below $4,000 → Protobot
+ * @returns The stored user balance object with effective tier
  */
 async function setUserBalance(kv: KVNamespace, userId: string, balance: number, currency = 'USD', botTier?: BotTier): Promise<UserBalance> {
   // Auto-select tier if not provided, based on stake amount
