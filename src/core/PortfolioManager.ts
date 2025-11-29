@@ -103,9 +103,9 @@ export function getBotTierForStake(stakeAmount: number): BotTier {
 class PortfolioManager {
   private static instance: PortfolioManager | null = null;
   private isRunning = false;
-  private payoutInterval: ReturnType<typeof setInterval> | null = null;
-  private tradeInterval: ReturnType<typeof setInterval> | null = null;
-  private activityInterval: ReturnType<typeof setInterval> | null = null;
+  private payoutTimeout: ReturnType<typeof setTimeout> | null = null;
+  private tradeTimeout: ReturnType<typeof setTimeout> | null = null;
+  private activityTimeout: ReturnType<typeof setTimeout> | null = null;
 
   // Current bot tier - defaults to auto-selection based on balance
   private currentBotTier: BotTier | null = null;
@@ -132,8 +132,14 @@ class PortfolioManager {
   private modeDuration: number = 0;
   private dumbModeAccumulatedLoss: number = 0;
   
+  // Bot mode probability thresholds (for initial mode selection)
+  private readonly SMART_MODE_PROBABILITY = 0.6;   // 60% chance to start in smart mode
+  private readonly DUMB_MODE_PROBABILITY = 0.9;    // 30% chance (0.6-0.9) to start in dumb mode
+  // Remaining 10% (0.9-1.0) is recovering mode
+  
   // Crypto pairs filter - only trade crypto, no stocks
-  private readonly CRYPTO_SUFFIX_PATTERNS = ['USDT', 'BUSD', 'BTC', 'ETH', 'BNB', 'USD'];
+  // These are common crypto quote currencies that form valid trading pairs
+  private readonly CRYPTO_QUOTE_CURRENCIES = ['USDT', 'BUSD', 'USDC', 'TUSD', 'FDUSD'];
 
   private constructor() {
     this.startTime = Date.now() - (Math.random() * 3600000 * 4); // Simulate we started 0-4 hours ago
@@ -146,12 +152,12 @@ class PortfolioManager {
    * Creates variance with smart/dumb periods to simulate realistic bot behavior
    */
   private initializeBotMode(): void {
-    // Start with a random mode, but weighted toward smart (60% smart, 30% dumb, 10% recovering)
+    // Start with a random mode using probability thresholds
     const roll = Math.random();
-    if (roll < 0.6) {
+    if (roll < this.SMART_MODE_PROBABILITY) {
       this.currentBotMode = 'smart';
       this.modeDuration = this.getSmartModeDuration();
-    } else if (roll < 0.9) {
+    } else if (roll < this.DUMB_MODE_PROBABILITY) {
       this.currentBotMode = 'dumb';
       this.modeDuration = this.getDumbModeDuration();
     } else {
@@ -229,9 +235,10 @@ class PortfolioManager {
 
   /**
    * Check if a symbol is a valid crypto trading pair (not a stock)
+   * Uses strict matching on known crypto quote currencies
    */
   private isCryptoTradingPair(symbol: string): boolean {
-    return this.CRYPTO_SUFFIX_PATTERNS.some(suffix => symbol.endsWith(suffix));
+    return this.CRYPTO_QUOTE_CURRENCIES.some(suffix => symbol.endsWith(suffix));
   }
 
   /**
@@ -320,9 +327,9 @@ class PortfolioManager {
 
   public stop() {
     this.isRunning = false;
-    if (this.payoutInterval) clearTimeout(this.payoutInterval);
-    if (this.tradeInterval) clearTimeout(this.tradeInterval);
-    if (this.activityInterval) clearTimeout(this.activityInterval);
+    if (this.payoutTimeout) clearTimeout(this.payoutTimeout);
+    if (this.tradeTimeout) clearTimeout(this.tradeTimeout);
+    if (this.activityTimeout) clearTimeout(this.activityTimeout);
   }
 
   /**
@@ -414,7 +421,7 @@ class PortfolioManager {
       
       // Schedule next payout
       const nextDelay = 800 + Math.random() * 1700;
-      this.payoutInterval = setTimeout(runPayout, nextDelay);
+      this.payoutTimeout = setTimeout(runPayout, nextDelay);
     };
 
     runPayout();
@@ -533,7 +540,7 @@ class PortfolioManager {
       }
       
       const nextDelay = baseDelay + Math.random() * (baseDelay * 4);
-      this.activityInterval = setTimeout(runActivity, nextDelay);
+      this.activityTimeout = setTimeout(runActivity, nextDelay);
     };
 
     runActivity();
@@ -701,7 +708,7 @@ class PortfolioManager {
     }
     
     const nextDelay = baseDelay + Math.random() * variance;
-    this.tradeInterval = setTimeout(() => this.startTradeCycle(), nextDelay);
+    this.tradeTimeout = setTimeout(() => this.startTradeCycle(), nextDelay);
   }
 
   /**
