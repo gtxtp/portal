@@ -6,6 +6,9 @@
 
 import { Env, Wallet, Transaction, ApiResponse } from '../types';
 
+// Validation constants
+const MAX_DEPOSIT_AMOUNT = 1000000; // Maximum single deposit in USD
+
 /**
  * Get user wallet
  */
@@ -87,9 +90,8 @@ export async function processDeposit(
       return { status: 'error', error: 'Deposit amount must be positive' };
     }
     
-    const MAX_DEPOSIT = 1000000; // Maximum deposit limit
-    if (amount > MAX_DEPOSIT) {
-      return { status: 'error', error: `Maximum deposit is $${MAX_DEPOSIT.toLocaleString()}` };
+    if (amount > MAX_DEPOSIT_AMOUNT) {
+      return { status: 'error', error: `Maximum deposit is $${MAX_DEPOSIT_AMOUNT.toLocaleString()}` };
     }
     
     const timestamp = Math.floor(Date.now() / 1000);

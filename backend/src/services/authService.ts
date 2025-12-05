@@ -7,6 +7,11 @@
 
 import { Env, User, AuthResponse } from '../types';
 
+// Validation constants
+const MAX_EMAIL_LENGTH = 255;
+const MIN_PASSWORD_LENGTH = 8;
+const MAX_PASSWORD_LENGTH = 128;
+
 /**
  * Generate a random referral code
  */
@@ -186,26 +191,26 @@ export async function registerUser(
     }
     
     // Normalize email after validation
-    email = email.toLowerCase().trim();
+    const normalizedEmail = email.toLowerCase().trim();
     
     // Validate email length
-    if (email.length > 255) {
-      return { status: 'error', error: 'Email too long (max 255 characters)' };
+    if (normalizedEmail.length > MAX_EMAIL_LENGTH) {
+      return { status: 'error', error: `Email too long (max ${MAX_EMAIL_LENGTH} characters)` };
     }
     
     // Validate password strength
-    if (password.length < 8) {
-      return { status: 'error', error: 'Password must be at least 8 characters' };
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      return { status: 'error', error: `Password must be at least ${MIN_PASSWORD_LENGTH} characters` };
     }
     
-    if (password.length > 128) {
-      return { status: 'error', error: 'Password too long (max 128 characters)' };
+    if (password.length > MAX_PASSWORD_LENGTH) {
+      return { status: 'error', error: `Password too long (max ${MAX_PASSWORD_LENGTH} characters)` };
     }
     
     // Check if email already exists
     const existing = await env.DB.prepare(
       'SELECT id FROM users WHERE email = ?'
-    ).bind(email).first();
+    ).bind(normalizedEmail).first();
     
     if (existing) {
       return { status: 'error', error: 'Email already registered' };
@@ -246,7 +251,7 @@ export async function registerUser(
       `INSERT INTO users (email, password_hash, role, kyc_status, referrer_id, referral_code, created_at, updated_at)
        VALUES (?, ?, 'user', 'pending', ?, ?, ?, ?)
        RETURNING id, email, role, kyc_status, referral_code, created_at`
-    ).bind(email, passwordHash, referrerId, userReferralCode, timestamp, timestamp).first<User>();
+    ).bind(normalizedEmail, passwordHash, referrerId, userReferralCode, timestamp, timestamp).first<User>();
     
     if (!result) {
       return { status: 'error', error: 'Failed to create user' };
@@ -336,10 +341,13 @@ export async function loginUser(
   password: string
 ): Promise<AuthResponse> {
   try {
+    // Normalize email for consistent lookup
+    const normalizedEmail = email.toLowerCase().trim();
+    
     // Find user
     const user = await env.DB.prepare(
       'SELECT * FROM users WHERE email = ?'
-    ).bind(email).first<User>();
+    ).bind(normalizedEmail).first<User>();
     
     if (!user) {
       return { status: 'error', error: 'Invalid email or password' };
