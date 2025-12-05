@@ -181,6 +181,15 @@ export async function registerUser(
   try {
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    
+    // Normalize email
+    email = email.toLowerCase().trim();
+    
+    // Validate email length
+    if (email.length > 255) {
+      return { status: 'error', error: 'Email too long (max 255 characters)' };
+    }
+    
     if (!emailRegex.test(email)) {
       return { status: 'error', error: 'Invalid email format' };
     }
@@ -188,6 +197,10 @@ export async function registerUser(
     // Validate password strength
     if (password.length < 8) {
       return { status: 'error', error: 'Password must be at least 8 characters' };
+    }
+    
+    if (password.length > 128) {
+      return { status: 'error', error: 'Password too long (max 128 characters)' };
     }
     
     // Check if email already exists
@@ -277,7 +290,7 @@ export async function registerUser(
       },
     };
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error('Registration error:', error instanceof Error ? error.message : 'Unknown error', error);
     return { status: 'error', error: 'Registration failed' };
   }
 }
@@ -352,7 +365,7 @@ export async function loginUser(
       },
     };
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('Login error:', error instanceof Error ? error.message : 'Unknown error', error);
     return { status: 'error', error: 'Login failed' };
   }
 }

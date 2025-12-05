@@ -4,6 +4,7 @@
 
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { isAxiosError } from 'axios';
 import { authAPI } from '../api/auth';
 import { useAuthStore } from '../store/useAuthStore';
 
@@ -29,8 +30,12 @@ export default function Login() {
       } else {
         setError(response.error || 'Login failed');
       }
-    } catch (err) {
-      setError('An error occurred. Please try again.');
+    } catch (err: unknown) {
+      let errorMessage = 'An error occurred. Please try again.';
+      if (isAxiosError(err) && err.response?.data?.error) {
+        errorMessage = err.response.data.error;
+      }
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
