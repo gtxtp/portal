@@ -42,11 +42,11 @@ export const useAuthStore = create<AuthState>((set) => ({
   
   initAuth: () => {
     const token = localStorage.getItem('authToken');
-    const userStr = localStorage.getItem('user');
+    const storedUserStr = localStorage.getItem('user');
     
-    if (token && userStr) {
+    if (token && storedUserStr) {
       try {
-        const user = JSON.parse(userStr);
+        const user = JSON.parse(storedUserStr);
         set({ user, token, isAuthenticated: true, isLoading: false });
       } catch {
         set({ user: null, token: null, isAuthenticated: false, isLoading: false });

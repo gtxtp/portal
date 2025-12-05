@@ -6,6 +6,9 @@
 
 import { Env, Wallet, Transaction, ApiResponse } from '../types';
 
+// Validation constants
+const MAX_DEPOSIT_AMOUNT = 1000000; // Maximum single deposit in USD
+
 /**
  * Get user wallet
  */
@@ -87,6 +90,10 @@ export async function processDeposit(
       return { status: 'error', error: 'Deposit amount must be positive' };
     }
     
+    if (amount > MAX_DEPOSIT_AMOUNT) {
+      return { status: 'error', error: `Maximum deposit is $${MAX_DEPOSIT_AMOUNT.toLocaleString()}` };
+    }
+    
     const timestamp = Math.floor(Date.now() / 1000);
     
     // Create transaction record
@@ -112,13 +119,24 @@ export async function processDeposit(
       data: { wallet, transaction },
     };
   } catch (error) {
-    console.error('Deposit error:', error);
+    console.error('Deposit error:', error instanceof Error ? error.message : 'Unknown error', error);
     return { status: 'error', error: 'Deposit failed' };
   }
 }
 
 /**
  * Process withdrawal
+ * 
+ * NOTE: Race condition exists - the balance check and update are not atomic.
+ * Between reading the wallet and updating it, another transaction could modify 
+ * the balance. This could lead to:
+ * - Negative balances if two withdrawals happen simultaneously
+ * - Incorrect balance calculations
+ * 
+ * Solution requires database transaction support. When D1 supports transactions:
+ * 1. Wrap balance check and update in a transaction
+ * 2. Use optimistic locking with a version column
+ * 3. Add database-level constraints to prevent negative balances
  */
 export async function processWithdrawal(
   env: Env,

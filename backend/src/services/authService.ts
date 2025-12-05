@@ -7,6 +7,11 @@
 
 import { Env, User, AuthResponse } from '../types';
 
+// Validation constants
+const MAX_EMAIL_LENGTH = 255;
+const MIN_PASSWORD_LENGTH = 8;
+const MAX_PASSWORD_LENGTH = 128;
+
 /**
  * Generate a random referral code
  */
@@ -179,21 +184,33 @@ export async function registerUser(
   referralCode?: string
 ): Promise<AuthResponse> {
   try {
-    // Validate email format
+    // Validate email format first
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return { status: 'error', error: 'Invalid email format' };
     }
     
+    // Normalize email after validation
+    const normalizedEmail = email.toLowerCase().trim();
+    
+    // Validate email length
+    if (normalizedEmail.length > MAX_EMAIL_LENGTH) {
+      return { status: 'error', error: `Email too long (max ${MAX_EMAIL_LENGTH} characters)` };
+    }
+    
     // Validate password strength
-    if (password.length < 8) {
-      return { status: 'error', error: 'Password must be at least 8 characters' };
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      return { status: 'error', error: `Password must be at least ${MIN_PASSWORD_LENGTH} characters` };
+    }
+    
+    if (password.length > MAX_PASSWORD_LENGTH) {
+      return { status: 'error', error: `Password too long (max ${MAX_PASSWORD_LENGTH} characters)` };
     }
     
     // Check if email already exists
     const existing = await env.DB.prepare(
       'SELECT id FROM users WHERE email = ?'
-    ).bind(email).first();
+    ).bind(normalizedEmail).first();
     
     if (existing) {
       return { status: 'error', error: 'Email already registered' };
@@ -234,7 +251,7 @@ export async function registerUser(
       `INSERT INTO users (email, password_hash, role, kyc_status, referrer_id, referral_code, created_at, updated_at)
        VALUES (?, ?, 'user', 'pending', ?, ?, ?, ?)
        RETURNING id, email, role, kyc_status, referral_code, created_at`
-    ).bind(email, passwordHash, referrerId, userReferralCode, timestamp, timestamp).first<User>();
+    ).bind(normalizedEmail, passwordHash, referrerId, userReferralCode, timestamp, timestamp).first<User>();
     
     if (!result) {
       return { status: 'error', error: 'Failed to create user' };
@@ -277,7 +294,7 @@ export async function registerUser(
       },
     };
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error('Registration error:', error instanceof Error ? error.message : 'Unknown error', error);
     return { status: 'error', error: 'Registration failed' };
   }
 }
@@ -294,6 +311,13 @@ async function createReferralChain(env: Env, referrerId: number, newUserId: numb
   ).bind(referrerId, newUserId, timestamp).run();
   
   // Levels 2-5: Indirect referrals
+  // Find the upline chain of the direct referrer to create multi-level referral relationships.
+  // Query explanation: WHERE referred_id = referrerId finds all records where someone referred
+  // the direct referrer, giving us their upline chain (ancestors in the referral tree).
+  // Example: If Alice referred Bob, and Bob refers Carol:
+  //   - referrerId = Bob's ID
+  //   - Query returns: (referrer_id=Alice, referred_id=Bob, level=1)
+  //   - Creates: (referrer_id=Alice, referred_id=Carol, level=2)
   const upline = await env.DB.prepare(
     'SELECT referrer_id, level FROM referrals WHERE referred_id = ? AND level < 5 ORDER BY level ASC'
   ).bind(referrerId).all<{ referrer_id: number; level: number }>();
@@ -317,10 +341,13 @@ export async function loginUser(
   password: string
 ): Promise<AuthResponse> {
   try {
+    // Normalize email for consistent lookup
+    const normalizedEmail = email.toLowerCase().trim();
+    
     // Find user
     const user = await env.DB.prepare(
       'SELECT * FROM users WHERE email = ?'
-    ).bind(email).first<User>();
+    ).bind(normalizedEmail).first<User>();
     
     if (!user) {
       return { status: 'error', error: 'Invalid email or password' };
@@ -352,7 +379,7 @@ export async function loginUser(
       },
     };
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('Login error:', error instanceof Error ? error.message : 'Unknown error', error);
     return { status: 'error', error: 'Login failed' };
   }
 }
