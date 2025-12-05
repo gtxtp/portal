@@ -126,8 +126,8 @@ export async function processDeposit(
  * Process withdrawal
  * 
  * NOTE: Race condition exists - the balance check and update are not atomic.
- * Between reading the wallet (line 140) and updating it (line 158), another 
- * transaction could modify the balance. This could lead to:
+ * Between reading the wallet and updating it, another transaction could modify 
+ * the balance. This could lead to:
  * - Negative balances if two withdrawals happen simultaneously
  * - Incorrect balance calculations
  * 

@@ -179,19 +179,18 @@ export async function registerUser(
   referralCode?: string
 ): Promise<AuthResponse> {
   try {
-    // Validate email format
+    // Validate email format first
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return { status: 'error', error: 'Invalid email format' };
+    }
     
-    // Normalize email
+    // Normalize email after validation
     email = email.toLowerCase().trim();
     
     // Validate email length
     if (email.length > 255) {
       return { status: 'error', error: 'Email too long (max 255 characters)' };
-    }
-    
-    if (!emailRegex.test(email)) {
-      return { status: 'error', error: 'Invalid email format' };
     }
     
     // Validate password strength
@@ -307,6 +306,13 @@ async function createReferralChain(env: Env, referrerId: number, newUserId: numb
   ).bind(referrerId, newUserId, timestamp).run();
   
   // Levels 2-5: Indirect referrals
+  // Find the upline chain of the direct referrer to create multi-level referral relationships.
+  // Query explanation: WHERE referred_id = referrerId finds all records where someone referred
+  // the direct referrer, giving us their upline chain (ancestors in the referral tree).
+  // Example: If Alice referred Bob, and Bob refers Carol:
+  //   - referrerId = Bob's ID
+  //   - Query returns: (referrer_id=Alice, referred_id=Bob, level=1)
+  //   - Creates: (referrer_id=Alice, referred_id=Carol, level=2)
   const upline = await env.DB.prepare(
     'SELECT referrer_id, level FROM referrals WHERE referred_id = ? AND level < 5 ORDER BY level ASC'
   ).bind(referrerId).all<{ referrer_id: number; level: number }>();
