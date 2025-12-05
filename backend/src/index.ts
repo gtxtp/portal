@@ -14,6 +14,8 @@
 
 import { Env } from './types';
 import { handleAuthRoutes } from './routes/auth';
+import { handleWalletRoutes } from './routes/wallet';
+import { handlePortfolioRoutes } from './routes/portfolio';
 import { BOT_TIERS, VALID_BOT_TIERS, getBotTierForStake, isValidBotTier, isValidStakeForTier } from './engine/BotTiers';
 import type { BotTier, BotTierConfig } from './types';
 
@@ -239,6 +241,16 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
   // Auth routes
   if (url.pathname.startsWith('/api/auth/')) {
     return handleAuthRoutes(request, env, url.pathname);
+  }
+
+  // Wallet routes
+  if (url.pathname.startsWith('/api/wallet')) {
+    return handleWalletRoutes(request, env, url.pathname);
+  }
+
+  // Portfolio routes
+  if (url.pathname.startsWith('/api/portfolio')) {
+    return handlePortfolioRoutes(request, env, url.pathname);
   }
 
   // API endpoint: GET /api/narrative
