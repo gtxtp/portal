@@ -126,7 +126,7 @@ export default function Login() {
             </div>
             <div>
               <h1 className="text-2xl font-bold tracking-wider text-white">ORION</h1>
-              <p className="text-xs text-[#00A3FF] tracking-widest uppercase">Trading Agent</p>
+              <p className="text-xs text-[#00A3FF] tracking-widest uppercase">Trading Agent Platform</p>
             </div>
           </div>
 
