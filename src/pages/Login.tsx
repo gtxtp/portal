@@ -1,5 +1,5 @@
 /**
- * Login Page - Enterprise Grade
+ * Login Page - Orion Enterprise
  */
 
 import { useState } from 'react';
@@ -43,12 +43,12 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0A0B0D] via-[#0B0E11] to-[#0A0B0D] flex">
+    <div className="min-h-screen bg-gradient-to-br from-[#020408] via-[#0B0E11] to-[#020408] flex">
       {/* Left Section - Branding */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#00D4AA]/10 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#00A3FF]/10 to-transparent" />
         <div className="absolute inset-0" style={{
-          backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(0, 212, 170, 0.05) 1px, transparent 0)',
+          backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(0, 163, 255, 0.05) 1px, transparent 0)',
           backgroundSize: '40px 40px'
         }} />
         
@@ -56,19 +56,19 @@ export default function Login() {
           {/* Logo & Brand */}
           <div>
             <div className="flex items-center gap-3 mb-6">
-              <div className="flex items-center justify-center h-12 w-12 rounded-lg bg-[#00D4AA]/20 border border-[#00D4AA]/30 backdrop-blur-sm">
-                <Zap className="h-7 w-7 text-[#00D4AA]" />
+              <div className="flex items-center justify-center h-12 w-12 rounded-lg bg-[#00A3FF]/20 border border-[#00A3FF]/30 backdrop-blur-sm">
+                <Zap className="h-7 w-7 text-[#00A3FF]" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold tracking-wider">TRADING <span className="text-[#00D4AA]">AGENT</span></h1>
-                <p className="text-xs text-slate-400 tracking-widest uppercase">Enterprise Trading Platform</p>
+                <h1 className="text-2xl font-bold tracking-wider">ORION</h1>
+                <p className="text-xs text-[#00A3FF] tracking-widest uppercase">Trading Agent Platform</p>
               </div>
             </div>
             
             <div className="mt-16 space-y-8">
               <div className="flex items-start gap-4">
-                <div className="flex items-center justify-center h-10 w-10 rounded-lg bg-[#00D4AA]/10 border border-[#00D4AA]/20">
-                  <Shield className="h-5 w-5 text-[#00D4AA]" />
+                <div className="flex items-center justify-center h-10 w-10 rounded-lg bg-[#00A3FF]/10 border border-[#00A3FF]/20">
+                  <Shield className="h-5 w-5 text-[#00A3FF]" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-lg mb-1">Enterprise Security</h3>
@@ -77,8 +77,8 @@ export default function Login() {
               </div>
               
               <div className="flex items-start gap-4">
-                <div className="flex items-center justify-center h-10 w-10 rounded-lg bg-[#00D4AA]/10 border border-[#00D4AA]/20">
-                  <TrendingUp className="h-5 w-5 text-[#00D4AA]" />
+                <div className="flex items-center justify-center h-10 w-10 rounded-lg bg-[#00A3FF]/10 border border-[#00A3FF]/20">
+                  <TrendingUp className="h-5 w-5 text-[#00A3FF]" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-lg mb-1">Real-Time Analytics</h3>
@@ -87,8 +87,8 @@ export default function Login() {
               </div>
               
               <div className="flex items-start gap-4">
-                <div className="flex items-center justify-center h-10 w-10 rounded-lg bg-[#00D4AA]/10 border border-[#00D4AA]/20">
-                  <Activity className="h-5 w-5 text-[#00D4AA]" />
+                <div className="flex items-center justify-center h-10 w-10 rounded-lg bg-[#00A3FF]/10 border border-[#00A3FF]/20">
+                  <Activity className="h-5 w-5 text-[#00A3FF]" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-lg mb-1">24/7 Trading</h3>
@@ -101,15 +101,15 @@ export default function Login() {
           {/* Footer Stats */}
           <div className="grid grid-cols-3 gap-6 pt-8 border-t border-white/10">
             <div>
-              <div className="text-2xl font-bold text-[#00D4AA]">99.9%</div>
+              <div className="text-2xl font-bold text-[#00A3FF]">99.9%</div>
               <div className="text-xs text-slate-400 uppercase tracking-wide">Uptime</div>
             </div>
             <div>
-              <div className="text-2xl font-bold text-[#00D4AA]">$2.4B+</div>
+              <div className="text-2xl font-bold text-[#00A3FF]">$2.4B+</div>
               <div className="text-xs text-slate-400 uppercase tracking-wide">Volume</div>
             </div>
             <div>
-              <div className="text-2xl font-bold text-[#00D4AA]">50K+</div>
+              <div className="text-2xl font-bold text-[#00A3FF]">50K+</div>
               <div className="text-xs text-slate-400 uppercase tracking-wide">Traders</div>
             </div>
           </div>
@@ -121,11 +121,12 @@ export default function Login() {
         <div className="w-full max-w-md">
           {/* Mobile Logo */}
           <div className="lg:hidden flex items-center justify-center gap-3 mb-8">
-            <div className="flex items-center justify-center h-12 w-12 rounded-lg bg-[#00D4AA]/20 border border-[#00D4AA]/30">
-              <Zap className="h-7 w-7 text-[#00D4AA]" />
+            <div className="flex items-center justify-center h-12 w-12 rounded-lg bg-[#00A3FF]/20 border border-[#00A3FF]/30">
+              <Zap className="h-7 w-7 text-[#00A3FF]" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold tracking-wider text-white">TRADING <span className="text-[#00D4AA]">AGENT</span></h1>
+              <h1 className="text-2xl font-bold tracking-wider text-white">ORION</h1>
+              <p className="text-xs text-[#00A3FF] tracking-widest uppercase">Trading Agent</p>
             </div>
           </div>
 
@@ -157,7 +158,7 @@ export default function Login() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="w-full pl-11 pr-4 py-3.5 bg-[#12141A] border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-[#00D4AA]/50 focus:ring-2 focus:ring-[#00D4AA]/20 transition-all"
+                    className="w-full pl-11 pr-4 py-3.5 bg-[#12141A] border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-[#00A3FF]/50 focus:ring-2 focus:ring-[#00A3FF]/20 transition-all"
                     placeholder="your@email.com"
                   />
                 </div>
@@ -177,7 +178,7 @@ export default function Login() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    className="w-full pl-11 pr-4 py-3.5 bg-[#12141A] border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-[#00D4AA]/50 focus:ring-2 focus:ring-[#00D4AA]/20 transition-all"
+                    className="w-full pl-11 pr-4 py-3.5 bg-[#12141A] border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-[#00A3FF]/50 focus:ring-2 focus:ring-[#00A3FF]/20 transition-all"
                     placeholder="••••••••"
                   />
                 </div>
@@ -186,7 +187,7 @@ export default function Login() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-gradient-to-r from-[#00D4AA] to-[#00B890] hover:from-[#00B890] hover:to-[#00D4AA] text-black font-bold py-3.5 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-[#00D4AA]/20 hover:shadow-[#00D4AA]/40"
+                className="w-full bg-gradient-to-r from-[#00A3FF] to-[#0080FF] hover:from-[#0080FF] hover:to-[#00A3FF] text-white font-bold py-3.5 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-[#00A3FF]/20 hover:shadow-[#00A3FF]/40"
               >
                 {isLoading ? (
                   <>
@@ -205,7 +206,7 @@ export default function Login() {
             <div className="mt-6 pt-6 border-t border-white/10">
               <p className="text-slate-400 text-sm text-center">
                 Don't have an account?{' '}
-                <Link to="/register" className="text-[#00D4AA] hover:text-[#00B890] font-semibold transition-colors">
+                <Link to="/register" className="text-[#00A3FF] hover:text-[#0080FF] font-semibold transition-colors">
                   Create Account →
                 </Link>
               </p>
@@ -213,7 +214,7 @@ export default function Login() {
           </div>
 
           <p className="text-center text-xs text-slate-500 mt-6">
-            Protected by enterprise-grade security • <span className="text-[#00D4AA]">SSL Encrypted</span>
+            Protected by enterprise-grade security • <span className="text-[#00A3FF]">SSL Encrypted</span>
           </p>
         </div>
       </div>

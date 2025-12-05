@@ -1,5 +1,5 @@
 /**
- * Register Page - Enterprise Grade
+ * Register Page - Orion Enterprise
  */
 
 import { useState } from 'react';
@@ -59,12 +59,12 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0A0B0D] via-[#0B0E11] to-[#0A0B0D] flex">
+    <div className="min-h-screen bg-gradient-to-br from-[#020408] via-[#0B0E11] to-[#020408] flex">
       {/* Left Section - Branding */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#00D4AA]/10 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#00A3FF]/10 to-transparent" />
         <div className="absolute inset-0" style={{
-          backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(0, 212, 170, 0.05) 1px, transparent 0)',
+          backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(0, 163, 255, 0.05) 1px, transparent 0)',
           backgroundSize: '40px 40px'
         }} />
         
@@ -72,12 +72,12 @@ export default function Register() {
           {/* Logo & Brand */}
           <div>
             <div className="flex items-center gap-3 mb-8">
-              <div className="flex items-center justify-center h-12 w-12 rounded-lg bg-[#00D4AA]/20 border border-[#00D4AA]/30 backdrop-blur-sm">
-                <Zap className="h-7 w-7 text-[#00D4AA]" />
+              <div className="flex items-center justify-center h-12 w-12 rounded-lg bg-[#00A3FF]/20 border border-[#00A3FF]/30 backdrop-blur-sm">
+                <Zap className="h-7 w-7 text-[#00A3FF]" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold tracking-wider">TRADING <span className="text-[#00D4AA]">AGENT</span></h1>
-                <p className="text-xs text-slate-400 tracking-widest uppercase">Enterprise Trading Platform</p>
+                <h1 className="text-2xl font-bold tracking-wider">ORION</h1>
+                <p className="text-xs text-[#00A3FF] tracking-widest uppercase">Trading Agent Platform</p>
               </div>
             </div>
             
@@ -89,20 +89,20 @@ export default function Register() {
 
               <div className="space-y-4 pt-6">
                 <div className="flex items-center gap-3">
-                  <div className="flex items-center justify-center h-8 w-8 rounded bg-[#00D4AA]/20">
-                    <Shield className="h-4 w-4 text-[#00D4AA]" />
+                  <div className="flex items-center justify-center h-8 w-8 rounded bg-[#00A3FF]/20">
+                    <Shield className="h-4 w-4 text-[#00A3FF]" />
                   </div>
                   <span className="text-slate-300">Enterprise-grade security and encryption</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="flex items-center justify-center h-8 w-8 rounded bg-[#00D4AA]/20">
-                    <UserPlus className="h-4 w-4 text-[#00D4AA]" />
+                  <div className="flex items-center justify-center h-8 w-8 rounded bg-[#00A3FF]/20">
+                    <UserPlus className="h-4 w-4 text-[#00A3FF]" />
                   </div>
                   <span className="text-slate-300">Instant account activation</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="flex items-center justify-center h-8 w-8 rounded bg-[#00D4AA]/20">
-                    <Zap className="h-4 w-4 text-[#00D4AA]" />
+                  <div className="flex items-center justify-center h-8 w-8 rounded bg-[#00A3FF]/20">
+                    <Zap className="h-4 w-4 text-[#00A3FF]" />
                   </div>
                   <span className="text-slate-300">Real-time market data and analytics</span>
                 </div>
@@ -117,11 +117,12 @@ export default function Register() {
         <div className="w-full max-w-md">
           {/* Mobile Logo */}
           <div className="lg:hidden flex items-center justify-center gap-3 mb-8">
-            <div className="flex items-center justify-center h-12 w-12 rounded-lg bg-[#00D4AA]/20 border border-[#00D4AA]/30">
-              <Zap className="h-7 w-7 text-[#00D4AA]" />
+            <div className="flex items-center justify-center h-12 w-12 rounded-lg bg-[#00A3FF]/20 border border-[#00A3FF]/30">
+              <Zap className="h-7 w-7 text-[#00A3FF]" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold tracking-wider text-white">TRADING <span className="text-[#00D4AA]">AGENT</span></h1>
+              <h1 className="text-2xl font-bold tracking-wider text-white">ORION</h1>
+              <p className="text-xs text-[#00A3FF] tracking-widest uppercase">Trading Agent</p>
             </div>
           </div>
 
@@ -153,7 +154,7 @@ export default function Register() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="w-full pl-11 pr-4 py-3.5 bg-[#12141A] border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-[#00D4AA]/50 focus:ring-2 focus:ring-[#00D4AA]/20 transition-all"
+                    className="w-full pl-11 pr-4 py-3.5 bg-[#12141A] border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-[#00A3FF]/50 focus:ring-2 focus:ring-[#00A3FF]/20 transition-all"
                     placeholder="your@email.com"
                   />
                 </div>
@@ -173,7 +174,7 @@ export default function Register() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    className="w-full pl-11 pr-4 py-3.5 bg-[#12141A] border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-[#00D4AA]/50 focus:ring-2 focus:ring-[#00D4AA]/20 transition-all"
+                    className="w-full pl-11 pr-4 py-3.5 bg-[#12141A] border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-[#00A3FF]/50 focus:ring-2 focus:ring-[#00A3FF]/20 transition-all"
                     placeholder="••••••••"
                   />
                 </div>
@@ -194,7 +195,7 @@ export default function Register() {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     required
-                    className="w-full pl-11 pr-4 py-3.5 bg-[#12141A] border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-[#00D4AA]/50 focus:ring-2 focus:ring-[#00D4AA]/20 transition-all"
+                    className="w-full pl-11 pr-4 py-3.5 bg-[#12141A] border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-[#00A3FF]/50 focus:ring-2 focus:ring-[#00A3FF]/20 transition-all"
                     placeholder="••••••••"
                   />
                 </div>
@@ -213,7 +214,7 @@ export default function Register() {
                     type="text"
                     value={referralCode}
                     onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
-                    className="w-full pl-11 pr-4 py-3.5 bg-[#12141A] border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-[#00D4AA]/50 focus:ring-2 focus:ring-[#00D4AA]/20 transition-all uppercase"
+                    className="w-full pl-11 pr-4 py-3.5 bg-[#12141A] border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-[#00A3FF]/50 focus:ring-2 focus:ring-[#00A3FF]/20 transition-all uppercase"
                     placeholder="ABCD1234"
                   />
                 </div>
@@ -222,7 +223,7 @@ export default function Register() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-gradient-to-r from-[#00D4AA] to-[#00B890] hover:from-[#00B890] hover:to-[#00D4AA] text-black font-bold py-3.5 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-[#00D4AA]/20 hover:shadow-[#00D4AA]/40"
+                className="w-full bg-gradient-to-r from-[#00A3FF] to-[#0080FF] hover:from-[#0080FF] hover:to-[#00A3FF] text-white font-bold py-3.5 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-[#00A3FF]/20 hover:shadow-[#00A3FF]/40"
               >
                 {isLoading ? (
                   <>
@@ -241,7 +242,7 @@ export default function Register() {
             <div className="mt-6 pt-6 border-t border-white/10">
               <p className="text-slate-400 text-sm text-center">
                 Already have an account?{' '}
-                <Link to="/login" className="text-[#00D4AA] hover:text-[#00B890] font-semibold transition-colors">
+                <Link to="/login" className="text-[#00A3FF] hover:text-[#0080FF] font-semibold transition-colors">
                   Sign In →
                 </Link>
               </p>
